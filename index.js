@@ -78,17 +78,10 @@ const pageCode = `
             const check = async () => {
                 select(0);
                 return await fetch(isOnlineUrl, {"cache": "reload"})
-                .then((r) => {if (!r.ok) throw 1; else return true;})
+                .catch(() => {select(offlineElem); throw 1;})
                 .then(() => fetch(isDmaUrl, {"cache": "reload"}))
-                .then((r) => {if (!r.ok) throw 2; else select(disabledElem);})
-                .catch(e => {
-                    if (e === 1) {
-                        // Fetch error
-                        select(offlineElem);
-                    } else {
-                        select(enabledElem);
-                    }
-                })
+                .then((r) => {if (!r.ok) {select(enabledElem);throw 2;} else select(disabledElem);})
+                .catch((r)=>{if (r!==1) select(enabledElem)})
             }
 
             check()
