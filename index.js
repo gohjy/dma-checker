@@ -1,10 +1,22 @@
 import http from "node:http";
 import fs from "node:fs/promises";
+import { setTimeout } from "node:timers/promises";
 
 const pageHTML = await fs.readFile("./page.html", { encoding: "utf-8" });
 
 const checkOnlineUrl = "https://upload.wikimedia.org/wikipedia/commons/f/f2/1px_trpt.png";
 const checkDmaUrl = "https://bloxd.io/textures/miscImages/logo.png";
+
+async function resilientFetch(url) {
+    try {
+        // await here so we can handle any
+        // errors thrown by fetch() below
+        return await fetch(url);
+    } catch {
+        await setTimeout(200);
+        return await fetch(url);
+    }
+}
 
 http.createServer(function (req, res) {
     if (req.url === "/") {
@@ -12,12 +24,12 @@ http.createServer(function (req, res) {
         res.write(pageHTML);
         res.end();
     } else if (req.url === "/check/online") {
-        fetch(checkOnlineUrl)
+        resilientFetch(checkOnlineUrl)
         .then(() => {res.writeHead(200)})
         .catch(() => {res.writeHead(418)})
         .finally(() => {res.end()})
     } else if (req.url === "/check/dma") {
-        fetch(checkDmaUrl)
+        resilientFetch(checkDmaUrl)
         .then(() => {res.writeHead(200)})
         .catch(() => {res.writeHead(418)})
         .finally(() => {res.end()})
