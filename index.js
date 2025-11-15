@@ -12,12 +12,12 @@ http.createServer(function (req, res) {
         res.write(pageHTML);
         res.end();
     } else if (req.url === "/check/online") {
-        fetch(checkOnlineUrl, {"cache": "reload"})
+        fetch(checkOnlineUrl)
         .then(() => {res.writeHead(200)})
         .catch(() => {res.writeHead(418)})
         .finally(() => {res.end()})
     } else if (req.url === "/check/dma") {
-        fetch(checkDmaUrl, {"cache": "reload"})
+        fetch(checkDmaUrl)
         .then(() => {res.writeHead(200)})
         .catch(() => {res.writeHead(418)})
         .finally(() => {res.end()})
