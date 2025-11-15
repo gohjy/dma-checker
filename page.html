@@ -59,6 +59,23 @@
         </div>
 
         <script type="module">
+            const checkInterval = (() => {
+                const defaultValue = 60;
+
+                const paramInterval = new URL(location.href).searchParams.get("interval")?.trim();
+                if (!paramInterval) return defaultValue;
+
+                const paramFloatInterval = Number.parseFloat(paramInterval);
+                if (Number.isNaN(paramFloatInterval)) {
+                    alert(`You provided an invalid interval ${paramInterval}, defaulting to checking every ${defaultValue} seconds`);
+                    return defaultValue;
+                } else if (paramFloatInterval < 2) {
+                    alert(`You provided an interval of ${paramFloatInterval}. To guard against stupid things happening, the default check interval of ${defaultValue} seconds will be applied.`);
+                    return defaultValue;
+                }
+                return paramFloatInterval;
+            })();
+
             const isOnlineUrl = "./check/online";
             const isDmaUrl = "./check/dma";
 
@@ -93,7 +110,7 @@
 
             check();
 
-            setInterval(check, 60000);
+            setInterval(check, checkInterval * 1000);
         </script>
     </body>
 </html>
