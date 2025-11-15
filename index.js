@@ -4,7 +4,7 @@ import fs from "node:fs/promises";
 const pageHTML = await fs.readFile("./page.html", { encoding: "utf-8" });
 
 const checkOnlineUrl = "https://upload.wikimedia.org/wikipedia/commons/f/f2/1px_trpt.png";
-const checkDmaUrl = "https://gohjy.github.io/gohjy/misc/transparentpixel.png";
+const checkDmaUrl = "https://bloxd.io/textures/miscImages/logo.png";
 
 http.createServer(function (req, res) {
     if (req.url === "/") {
