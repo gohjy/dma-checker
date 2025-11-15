@@ -1,6 +1,6 @@
 import http from "node:http";
-import fs from "node:fs/promises";
 import { setTimeout } from "node:timers/promises";
+import process from "node:process";
 
 const pageHTML = `\
 <!DOCTYPE html>
@@ -122,42 +122,53 @@ const pageHTML = `\
 `;
 
 const config = await (async () => {
-    const userConfig = await fs.readFile(
-        new URL("./config.json", import.meta.url)
-    ).then(JSON.parse).catch(() => ({}));
-    if (!userConfig || (typeof userConfig !== "object")) {
-        throw new Error("Invalid configuration in config.json");
-    }
+    const convertCasing = str => str
+        .split("-")
+        .map((x, i) => 
+            (i === 0) 
+            ? x // don't capitalise first char
+            : x[0].toUpperCase() + x.slice(1).toLowerCase()
+        ).join("");
+
+    const args = new Map(
+        process.argv
+        .slice(2)
+        .filter(x => 
+            x.startsWith("--") 
+            && !x.startsWith("---")
+            && !x.startsWith("--=")
+        ).map(x => x.split("="))
+        .map(([name, ...val]) => [convertCasing(name.slice(2)), val.join("=")])
+    );
 
     const defaultConfig = {
         checkOnlineUrl: "https://upload.wikimedia.org/wikipedia/commons/f/f2/1px_trpt.png",
-        checkDmaUrl: "https://bloxd.io/textures/miscImages/logo.png"
+        checkDmaUrl: "https://bloxd.io/textures/miscImages/logo.png",
+        port: 8080
     };
 
-    const combinedConfig = Object.assign({}, defaultConfig, userConfig);
-
+    const userConfig = {};
     for (const key of Object.keys(defaultConfig)) {
+        if (!args.has(key)) {
+            userConfig[key] = defaultConfig[key];
+            continue;
+        }
+
         if (
             (typeof key === "string")
             && key.match(/url/i) 
             && URL.canParse(defaultConfig[key]) 
-            && !URL.canParse(combinedConfig[key])
+            && !URL.canParse(args.get(key))
         ) {
-            console.warn(`WARNING: Configuration key "${key}" with value ${JSON.stringify(combinedConfig[key])} does not match URL syntax, defaulting to ${JSON.stringify(defaultConfig[key])}`);
-            combinedConfig[key] = defaultConfig[key];
+            console.warn(`WARNING: Configuration key "${key}" with value ${JSON.stringify(args.get(key))} does not match URL syntax, defaulting to ${JSON.stringify(defaultConfig[key])}`);
+            userConfig[key] = defaultConfig[key];
             continue;
         }
 
-        if (
-            (typeof combinedConfig[key]) !== (typeof defaultConfig[key])
-        ) {
-            console.warn(`WARNING: Configuration key "${key}" with value ${JSON.stringify(combinedConfig[key])} does not match expected type "${typeof defaultConfig[key]}" (it is of type "${typeof combinedConfig[key]}"), defaulting to ${JSON.stringify(defaultConfig[key])}`);
-            combinedConfig[key] = defaultConfig[key];
-            continue;
-        }
+        userConfig[key] = args.get(key);
     }
 
-    return combinedConfig;
+    return userConfig;
 })();
 
 async function resilientFetch(url) {
@@ -171,7 +182,14 @@ async function resilientFetch(url) {
     }
 }
 
-const PORT = 8080;
+const PORT = Number(config.port);
+if (!Number.isInteger(PORT)) {
+    console.error(`Invalid config port value "${config.port}", must be integer`);
+    process.exit(1);
+} else if ((PORT < 0) || (PORT >= 65536)) {
+    console.error(`Invalid config port value ${PORT}, must be >= 0 and < 65536`);
+    process.exit(1);
+}
 
 console.log(`Starting check server on http://localhost:${PORT}/ with configuration: %o`, config);
 
