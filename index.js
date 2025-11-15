@@ -2,10 +2,12 @@ import http from "node:http";
 import fs from "node:fs/promises";
 import { setTimeout } from "node:timers/promises";
 
-const pageHTML = await fs.readFile("./page.html", { encoding: "utf-8" });
+const pageHTML = await fs.readFile(new URL("./page.html", import.meta.url), { encoding: "utf-8" });
 
 const config = await (async () => {
-    const userConfig = await fs.readFile("./config.json").then(JSON.parse).catch(() => ({}));
+    const userConfig = await fs.readFile(
+        new URL("./config.json", import.meta.url)
+    ).then(JSON.parse).catch(() => ({}));
     if (!userConfig || (typeof userConfig !== "object")) {
         throw new Error("Invalid configuration in config.json");
     }
