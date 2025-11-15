@@ -59,16 +59,18 @@ const PORT = 8080;
 console.log(`Starting check server on http://localhost:${PORT}/ with configuration: %o`, config);
 
 http.createServer(function (req, res) {
-    if (req.url === "/") {
+    const pathname = new URL(req.url, "http://fauxhost/").pathname;
+
+    if (pathname === "/") {
         res.writeHead(200, {"content-type": "text/html"});
         res.write(pageHTML);
         res.end();
-    } else if (req.url === "/check/online") {
+    } else if (pathname === "/check/online") {
         resilientFetch(config.checkOnlineUrl)
         .then(() => {res.writeHead(200)})
         .catch(() => {res.writeHead(418)})
         .finally(() => {res.end()})
-    } else if (req.url === "/check/dma") {
+    } else if (pathname === "/check/dma") {
         resilientFetch(config.checkDmaUrl)
         .then(() => {res.writeHead(200)})
         .catch(() => {res.writeHead(418)})
