@@ -121,7 +121,7 @@ const pageHTML = `\
 </html>
 `;
 
-const config = await (async () => {
+const config = (() => {
     const convertCasing = str => str
         .split("-")
         .map((x, i) => 
